@@ -25,5 +25,5 @@ spring:
 
 application:
   config:
-    user-url: http://localhost:8222/api/v1/users
-    news-url: http://localhost:8222/api/v1/news
+    user-url: http://localhost:8080/api/v1/users
+    news-url: http://localhost:8085/api/v1/news

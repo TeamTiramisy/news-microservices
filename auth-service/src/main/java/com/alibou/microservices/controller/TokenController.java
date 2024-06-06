@@ -13,7 +13,7 @@ public class TokenController {
 
     private final TokenService tokenService;
 
-    @PostMapping("/{token}")
+    @GetMapping("/{token}")
     public ResponseEntity<TokenDto> findByToken(@PathVariable String token) {
         return ResponseEntity.ok(tokenService.findByToken(token));
     }
