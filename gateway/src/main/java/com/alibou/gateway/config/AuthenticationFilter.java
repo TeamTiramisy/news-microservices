@@ -6,8 +6,12 @@ import com.alibou.gateway.service.JwtService;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -30,13 +34,13 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return ((exchange, chain) -> {
             if (validator.isSecured.test(exchange.getRequest())) {
                 if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                    throw new RuntimeException("missing authorization header");
+                    return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
 
 
                 String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                    throw new RuntimeException("missing authorization header");
+                    return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
 
                 String jwt = authHeader.substring(7);
@@ -49,14 +53,20 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     boolean isTokenValid = tokenDto.expired && tokenDto.revoked;
 
                     if (jwtService.isTokenValid(jwt, userDto) && isTokenValid) {
-                        throw new RuntimeException("invalid token");
+                        return onError(exchange, HttpStatus.UNAUTHORIZED);
                     }
                 } else {
-                    throw new RuntimeException("invalid token");
+                    return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
             }
             return chain.filter(exchange);
         });
+    }
+
+    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(httpStatus);
+        return response.setComplete();
     }
 
     public static class Config {
