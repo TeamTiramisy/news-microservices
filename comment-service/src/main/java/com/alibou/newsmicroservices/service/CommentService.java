@@ -50,9 +50,9 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentDto save(CommentCreateDto commentCreateDto){
-        UserDto user = userService.findUserById(commentCreateDto.getUserId());
-        NewDto news = newsService.findNewsById(commentCreateDto.getNewsId());
+    public CommentDto save(CommentCreateDto commentCreateDto, String token){
+        UserDto user = userService.findUserById(commentCreateDto.getUserId(), token);
+        NewDto news = newsService.findNewsById(commentCreateDto.getNewsId(), token);
 
         CommentDto commentDto = Optional.of(create(user.id(), news.id(), commentCreateDto.getText()))
                 .map(commentRepository::save)

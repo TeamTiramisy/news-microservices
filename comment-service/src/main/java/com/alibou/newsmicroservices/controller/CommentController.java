@@ -34,8 +34,8 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<CommentDto> save(@RequestBody @Validated CommentCreateDto commentCreateDto){
-        return new ResponseEntity<>(commentService.save(commentCreateDto), HttpStatus.CREATED);
+    public ResponseEntity<CommentDto> save(@RequestBody @Validated CommentCreateDto commentCreateDto, @RequestHeader("Authorization") String token){
+        return new ResponseEntity<>(commentService.save(commentCreateDto, token), HttpStatus.CREATED);
     }
 
     @GetMapping("/news/{id}")

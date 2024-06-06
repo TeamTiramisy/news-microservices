@@ -57,8 +57,8 @@ public class NewsService {
     }
 
     @Transactional
-    public NewsDto save(NewsCreateDto dto) {
-        UserDto user = userService.findUserById(dto.getUserId());
+    public NewsDto save(NewsCreateDto dto, String token) {
+        UserDto user = userService.findUserById(dto.getUserId(), token);
 
         NewsDto newsDto = Optional.of(dto)
                 .map(newsMapper::mapToEntity)
@@ -81,8 +81,8 @@ public class NewsService {
     }
 
     @Transactional
-    public NewsDto update(Integer id, NewsCreateDto newsCreateDto) {
-        UserDto user = userService.findUserById(newsCreateDto.getUserId());
+    public NewsDto update(Integer id, NewsCreateDto newsCreateDto, String token) {
+        UserDto user = userService.findUserById(newsCreateDto.getUserId(), token);
 
         NewsDto newsDto = newsRepository.findById(id)
                 .map(news -> newsMapper.mapToUpdate(news, newsCreateDto))

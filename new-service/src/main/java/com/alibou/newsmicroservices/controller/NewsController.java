@@ -13,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.constraints.Positive;
+
 import java.util.List;
 
 @RestController
@@ -24,24 +25,25 @@ public class NewsController {
     private final NewsService newsService;
 
     @GetMapping
-    public ResponseEntity<List<NewsDto>> findAll(NewsFilter newsFilter, Pageable pageable){
+    public ResponseEntity<List<NewsDto>> findAll(NewsFilter newsFilter, Pageable pageable) {
         return new ResponseEntity<>(newsService.findAll(newsFilter, pageable), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NewsDto> findById(@PathVariable @Positive Integer id){
+    public ResponseEntity<NewsDto> findById(@PathVariable @Positive Integer id) {
         return new ResponseEntity<>(newsService.findById(id), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<NewsDto> save(@RequestBody @Validated NewsCreateDto newsCreateDto){
-        return new ResponseEntity<>(newsService.save(newsCreateDto), HttpStatus.CREATED);
+    public ResponseEntity<NewsDto> save(@RequestBody @Validated NewsCreateDto newsCreateDto, @RequestHeader("Authorization") String token) {
+        return new ResponseEntity<>(newsService.save(newsCreateDto, token), HttpStatus.CREATED);
     }
 
     @PutMapping("{id}")
     public ResponseEntity<NewsDto> update(@PathVariable @Positive Integer id,
-                                          @RequestBody @Validated NewsCreateDto newsCreateDto){
-        return new ResponseEntity<>(newsService.update(id, newsCreateDto), HttpStatus.OK);
+                                          @RequestBody @Validated NewsCreateDto newsCreateDto,
+                                          @RequestHeader("Authorization") String token) {
+        return new ResponseEntity<>(newsService.update(id, newsCreateDto, token), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
