@@ -37,26 +37,26 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
 
-
                 String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                final String jwt;
+                final String username;
+
+                try {
+                    jwt = authHeader.substring(7);
+                    username = jwtService.extractUsername(jwt);
+                } catch (Exception exception) {
                     return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
-
-                String jwt = authHeader.substring(7);
-                String username = jwtService.extractUsername(jwt);
 
                 if (username != null) {
                     UserDto userDto = restTemplate.getForObject("http://localhost:8080/api/v1/users/user/" + username, UserDto.class);
                     TokenDto tokenDto = restTemplate.getForObject("http://localhost:8089/api/v1/token/" + jwt, TokenDto.class);
 
-                    boolean isTokenValid = tokenDto.expired && tokenDto.revoked;
+                    boolean isTokenValid = !tokenDto.expired && !tokenDto.revoked;
 
-                    if (jwtService.isTokenValid(jwt, userDto) && isTokenValid) {
+                    if (!(jwtService.isTokenValid(jwt, userDto) && isTokenValid)) {
                         return onError(exchange, HttpStatus.UNAUTHORIZED);
                     }
-                } else {
-                    return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
             }
             return chain.filter(exchange);
