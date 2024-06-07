@@ -6,6 +6,7 @@ import com.alibou.gateway.service.JwtService;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -40,10 +41,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
                 final String jwt;
                 final String username;
+                final String role;
 
                 try {
                     jwt = authHeader.substring(7);
                     username = jwtService.extractUsername(jwt);
+                    role = jwtService.extractRole(jwt);
                 } catch (Exception exception) {
                     return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
@@ -58,6 +61,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                         return onError(exchange, HttpStatus.UNAUTHORIZED);
                     }
                 }
+
+                String requiredRole = getRequiredRole(exchange.getRequest().getURI().getPath(), exchange.getRequest().getMethod());
+                if (requiredRole != null && !role.equals(requiredRole)) {
+                    return onError(exchange, HttpStatus.FORBIDDEN);
+                }
             }
             return chain.filter(exchange);
         });
@@ -67,6 +75,19 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
         return response.setComplete();
+    }
+
+    private String getRequiredRole(String path, HttpMethod method) {
+        if (path.startsWith("/api/v1/users")) {
+            return "ADMIN";
+        } else if (path.startsWith("/api/v1/news")) {
+            if (method == HttpMethod.GET) {
+                return null;
+            } else {
+                return "ADMIN";
+            }
+        }
+        return null;
     }
 
     public static class Config {
